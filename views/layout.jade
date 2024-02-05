@@ -14,18 +14,19 @@ html
         .navbar-header
           a.navbar-brand(href='#') Login Database
         ul.nav.navbar-nav
-          li(class=(title=='Members'?'active':''))
-            a(href='/') Members
-          if !person
-           li(class=(title=='Register'?'active':''))
-            a(href='/users/register') Register
-           li(class=(title=='Login'?'active':''))
-            a(href='/users/login') Login
+          if person && person.role == 'admin'
+            li(class= 'active')
+                a(href='/') Users
+          if person
+            li(class=(title=='Register' ? 'active' : ''))
+              a(href='/users/register') Register
+            li(class=(title=='Login' ? 'active' : ''))
+              a(href='/users/login') Login
         ul.nav.navbar-nav.navbar-right
           if person
             li
               span(style='color:white;font-size:1.3vw;padding-right:10px;') Hello #{person.name}, 
-               a(href='/users/logout') Logout
+              a(href='/users/logout') Logout
     .container
-      !=messages()
+      != messages()
     block content

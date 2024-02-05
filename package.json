@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "seed": "node seeder.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -11,7 +12,7 @@
     "connect-flash": "*",
     "cookie-parser": "~1.4.5",
     "debug": "~4.1.1",
-    "execution-time-async": "^1.4.1",
+    "execution-time-calc": "^1.4.1",
     "express": "~4.17.1",
     "express-messages": "*",
     "express-session": "^1.17.1",

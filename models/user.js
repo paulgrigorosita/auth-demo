@@ -23,27 +23,64 @@ var userSchema=mongoose.Schema({
     },
     contact:{
         type:Number
+    },
+    role:{
+        type:String
     }
 });
 var User=module.exports=mongoose.model('user',userSchema);
-module.exports.getUserById=function(id,callback){
-    User.findById(id,callback);
+module.exports.getUserById = async function (id) {
+    try {
+      const user = await User.findById(id);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  };
+module.exports.getUserByUsername = function (username) {
+    var query = { uname: username };
+    return User.findOne(query);
+};  
+module.exports.getAllUsersWithUserRole = function () {
+    var query = { role: 'user' };
+    return User.find(query);
 };
-module.exports.getUserByUsername=function(username,callback){
-    var query={uname:username}
-    User.findOne(query,callback);
-};
-module.exports.comparePassword=function(candidatepassword,hash,callback){
-    bcrypt.compare(candidatepassword,hash,function(err,isMatch){
-        callback(null,isMatch);
-    }); 
+module.exports.comparePassword = async function (candidatePassword, hashedPassword) {
+    try {
+      const isMatch = await bcrypt.compare(candidatePassword, hashedPassword);
+      return isMatch;
+    } catch (error) {
+      throw error;
+    }
 };
 module.exports.createUser=function(newUser,callback){
     bcrypt.genSalt(10,function(err,salt){
         bcrypt.hash(newUser.password,salt,function(err,hash){
             newUser.password= hash
-            newUser.save(callback);
+            try{
+                newUser.save();
+                console.log(newUser);
+            }
+            catch(e){
+                console.log(e);
+            }
+
         });
     });
 }
- 
+module.exports.updateUserById = async function (id, updatedUser) {
+    try {
+      const user = await User.findByIdAndUpdate(id, updatedUser);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+};
+module.exports.deleteUserById = async function (id) {
+    try {
+      const user = await User.findByIdAndDelete(id);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+};

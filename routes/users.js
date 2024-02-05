@@ -8,8 +8,8 @@ var LocalStrategy = require('passport-local').Strategy;
 var nodeMailer=require('nodemailer');
 const {check, validationResult} = require('express-validator/check');
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+router.get('/',ensureAuthenticated, function(req, res, next) {
+  res.render('userdashboard');
 });
 router.get('/register', function(req, res, next) {
   res.render('register',{title:'Register'});
@@ -27,27 +27,32 @@ router.post('/login',
 passport.serializeUser(function(user,done){
   done(null,user.id);
 });
-passport.deserializeUser(function(id,done){
-  User.getUserById(id,function(err,user){
-    done(err,user);
-  });
-}); 
-passport.use(new LocalStrategy(function(username,password,done){
-  User.getUserByUsername(username,function(err,user){
-    if(err) throw err;
-    if(!user){
-      return done(null,false,{message:'unknown user'});
+passport.deserializeUser(async function (id, done) {
+  try {
+    const user = await User.getUserById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+passport.use(new LocalStrategy(async function (username, password, done) {
+  try {
+    const user = await User.getUserByUsername(username);
+
+    if (!user) {
+      return done(null, false, { message: 'unknown user' });
     }
-    User.comparePassword(password,user.password,function(err,isMatch){
-      if(err) return done(err);
-      if(isMatch){
-        return done(null,user);
-      }
-      else{
-        return done(null,false,{message:'Invalid Password'});
-      }
-    });
-  });
+
+    const isMatch = await User.comparePassword(password, user.password);
+
+    if (isMatch) {
+      return done(null, user);
+    } else {
+      return done(null, false, { message: 'Invalid Password' });
+    }
+  } catch (err) {
+    return done(err);
+  }
 }));
 
 router.post('/register',upload.single('profile'),[
@@ -85,40 +90,53 @@ router.post('/register',upload.single('profile'),[
       password:password,
       profileimage:profileimage,
       uname:uname,
-      contact:contact
+      contact:contact,
+      role:"user"
     });
-    User.createUser(newUser,function(){
-      console.log(newUser);
-    });
-    var transporter = nodeMailer.createTransport({
-      service:'Gmail',
-      auth:{
-          user:'ankurlohiya3@gmail.com',
-          pass:'******'
-      }
-  });
-var mailOptions={
-    from:'Deepankur Lohiya<ankurlohiya3@gmail.com>',
-    to:`${email}`,
-    subject:'Confirmation Email',
-    text:'You have been sucessfully registered with us',
-    html:`<ul><li>Name:${name}</li><li>Mobile No.:${contact}</li><li>Profile:${profileimage}</li></ul>`
-}
-transporter.sendMail(mailOptions,(err,info)=>{
-    if(err){
-        console.log(err);
-    }
-    else{
-        console.log(`Mail Sent at ${req.body.email}`);
-    }
-});
+    User.createUser(newUser);
+  //   var transporter = nodeMailer.createTransport({
+  //     service:'Gmail',
+  //     auth:{
+  //         user:'ankurlohiya3@gmail.com',
+  //         pass:'******'
+  //     }
+  // });
+// var mailOptions={
+//     from:'Deepankur Lohiya<ankurlohiya3@gmail.com>',
+//     to:`${email}`,
+//     subject:'Confirmation Email',
+//     text:'You have been sucessfully registered with us',
+//     html:`<ul><li>Name:${name}</li><li>Mobile No.:${contact}</li><li>Profile:${profileimage}</li></ul>`
+// }
+// transporter.sendMail(mailOptions,(err,info)=>{
+//     if(err){
+//         console.log(err);
+//     }
+//     else{
+//         console.log(`Mail Sent at ${req.body.email}`);
+//     }
+// });
   res.location('/');
   res.redirect('./login');
 }
 });
-router.get('/logout',function(req,res){
-  req.logout();
-  req.flash('success','You are now logged out');
-  res.redirect('/users/login');
+router.get('/logout', function(req, res) {
+  req.logout(function(err) {
+    if (err) {
+      console.error(err);
+      return next(err);
+    }
+    req.flash('success', 'You are now logged out');
+    res.redirect('/users/login');
+  });
 });
+
+
+function ensureAuthenticated(req,res,next){
+  if(req.isAuthenticated()){
+    return next();
+  }
+  res.redirect('/users/login')
+}
+
 module.exports = router;
