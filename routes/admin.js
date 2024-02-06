@@ -1,5 +1,5 @@
 var express = require('express');
-var perf = require('execution-time-calc')();
+var perf = require('execution-time-async')();
 var router = express.Router();
 var User = require('../models/user')
 perf.config();
